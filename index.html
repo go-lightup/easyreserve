@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교육 예약 정보 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .card-hover:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">🏛️ 중앙과학관 교육 예약 현황</h1>
+            <p class="text-slate-500">수집된 최신 예약 정보를 확인하세요</p>
+        </header>
+
+        <div class="mb-6 flex justify-between items-center">
+            <span id="total-count" class="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">총 0건</span>
+        </div>
+
+        <div id="card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-20 text-slate-400">데이터를 불러오는 중입니다...</div>
+        </div>
+    </div>
+
+    <script>
+        // CSV 파일 경로 (크롤링 결과 파일명과 일치해야 함)
+        const csvFile = 'science_reserve_list.csv';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            Papa.parse(csvFile, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    renderCards(results.data);
+                },
+                error: function(err) {
+                    document.getElementById('card-container').innerHTML = 
+                        `<div class="col-span-full text-red-500">CSV 파일을 찾을 수 없습니다. <br> 파일명을 확인해주세요.</div>`;
+                }
+            });
+        });
+
+        function renderCards(data) {
+            const container = document.getElementById('card-container');
+            const countDisplay = document.getElementById('total-count');
+            
+            if (data.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-slate-400">표시할 데이터가 없습니다.</div>`;
+                return;
+            }
+
+            countDisplay.innerText = `총 ${data.length}건`;
+            container.innerHTML = '';
+
+            data.forEach(row => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 p-6 card-hover flex flex-col justify-between';
+                
+                // 각 항목별 데이터가 비어있을 경우 처리
+                const title = row['제목'] || '제목 없음';
+                const target = row['대상'] || '-';
+                const cost = row['비용'] || '-';
+                const eduDate = row['교육기간'] || '-';
+                const regDate = row['신청기간'] || '-';
+                const link = row['링크'] || '#';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="mb-4">
+                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase">예약가능</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-800 mb-4 line-clamp-2">${title}</h2>
+                        
+                        <div class="space-y-2 text-sm text-slate-600">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-slate-400">대상</span>
+                                <span>${target}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="font-medium text-slate-400">비용</span>
+                                <span class="text-blue-600 font-semibold">${cost}</span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100">
+                                <div class="text-xs text-slate-400 mb-1">교육기간</div>
+                                <div class="font-medium">${eduDate}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-400 mb-1">신청기간</div>
+                                <div class="font-medium text-orange-600">${regDate}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="${link}" target="_blank" class="mt-6 block w-full text-center bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 rounded-lg transition-colors">
+                        상세보기 및 신청
+                    </a>
+                `;
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
