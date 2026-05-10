@@ -51,7 +51,7 @@
                 // CSV에서 '상태' 읽기
                 const statusText = row['상태'] || '확인불가';
                 const isExpired = statusText === '접수종료';
-                const isWaiting = statusText === '대기중';
+                const isWaiting = statusText === '접수대기';
 
                 // 상태별 뱃지 디자인 설정
                 let statusClass = 'bg-blue-50 text-blue-600 border-blue-100'; // 진행중 (기본)
