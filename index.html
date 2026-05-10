@@ -3,33 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교육 예약 정보 대시보드</title>
+    <title>과학관 교육 예약 알리미</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
-        .card-hover:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; }
+        /* 모바일에서 텍스트가 넘치지 않게 말줄임표 처리 */
+        .truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-10 text-center">
-            <h1 class="text-3xl font-bold text-slate-800 mb-2">🏛️ 중앙과학관 교육 예약 현황</h1>
-            <p class="text-slate-500">수집된 최신 예약 정보를 확인하세요</p>
+<body class="p-3 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-6 mt-4">
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                🏛️ 교육 예약 현황
+                <span id="total-count" class="text-xs font-normal text-slate-500 mt-1">총 0건</span>
+            </h1>
         </header>
 
-        <div class="mb-6 flex justify-between items-center">
-            <span id="total-count" class="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">총 0건</span>
-        </div>
-
-        <div id="card-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-20 text-slate-400">데이터를 불러오는 중입니다...</div>
+        <div id="card-container" class="space-y-2 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            <div class="text-center py-20 text-slate-400 col-span-full">데이터를 읽어오고 있습니다...</div>
         </div>
     </div>
 
     <script>
-        // CSV 파일 경로 (크롤링 결과 파일명과 일치해야 함)
         const csvFile = 'science_reserve_list.csv';
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -38,21 +36,17 @@
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    renderCards(results.data);
-                },
-                error: function(err) {
-                    document.getElementById('card-container').innerHTML = 
-                        `<div class="col-span-full text-red-500">CSV 파일을 찾을 수 없습니다. <br> 파일명을 확인해주세요.</div>`;
+                    renderList(results.data);
                 }
             });
         });
 
-        function renderCards(data) {
+        function renderList(data) {
             const container = document.getElementById('card-container');
             const countDisplay = document.getElementById('total-count');
             
-            if (data.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-slate-400">표시할 데이터가 없습니다.</div>`;
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="text-center py-10">데이터가 없습니다.</div>`;
                 return;
             }
 
@@ -60,49 +54,46 @@
             container.innerHTML = '';
 
             data.forEach(row => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 p-6 card-hover flex flex-col justify-between';
+                const item = document.createElement('div');
+                // 모바일에서 높이를 최소화한 디자인
+                item.className = 'bg-white rounded-lg shadow-sm border border-slate-200 p-3 flex flex-col justify-between hover:border-blue-300 transition-colors';
                 
-                // 각 항목별 데이터가 비어있을 경우 처리
                 const title = row['제목'] || '제목 없음';
                 const target = row['대상'] || '-';
                 const cost = row['비용'] || '-';
-                const eduDate = row['교육기간'] || '-';
                 const regDate = row['신청기간'] || '-';
                 const link = row['링크'] || '#';
 
-                card.innerHTML = `
-                    <div>
-                        <div class="mb-4">
-                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase">예약가능</span>
+                item.innerHTML = `
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between items-start gap-2">
+                            <h2 class="text-base font-bold text-slate-800 leading-snug truncate-2 flex-1">${title}</h2>
+                            <span class="shrink-0 text-[10px] font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100">접수중</span>
                         </div>
-                        <h2 class="text-xl font-bold text-slate-800 mb-4 line-clamp-2">${title}</h2>
                         
-                        <div class="space-y-2 text-sm text-slate-600">
-                            <div class="flex justify-between">
-                                <span class="font-medium text-slate-400">대상</span>
-                                <span>${target}</span>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 text-[13px]">
+                            <div class="flex items-center text-slate-500">
+                                <span class="w-10 shrink-0 text-slate-400 text-[11px]">대상</span>
+                                <span class="truncate text-slate-700">${target}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium text-slate-400">비용</span>
-                                <span class="text-blue-600 font-semibold">${cost}</span>
+                            <div class="flex items-center text-slate-500">
+                                <span class="w-10 shrink-0 text-slate-400 text-[11px]">비용</span>
+                                <span class="font-semibold text-blue-600">${cost}</span>
                             </div>
-                            <div class="pt-2 border-t border-slate-100">
-                                <div class="text-xs text-slate-400 mb-1">교육기간</div>
-                                <div class="font-medium">${eduDate}</div>
-                            </div>
-                            <div>
-                                <div class="text-xs text-slate-400 mb-1">신청기간</div>
-                                <div class="font-medium text-orange-600">${regDate}</div>
+                            <div class="flex items-center text-slate-500 col-span-2 border-t border-slate-50 pt-1 mt-1">
+                                <span class="w-12 shrink-0 text-slate-400 text-[11px]">신청일</span>
+                                <span class="text-orange-600 font-medium truncate">${regDate}</span>
                             </div>
                         </div>
                     </div>
                     
-                    <a href="${link}" target="_blank" class="mt-6 block w-full text-center bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 rounded-lg transition-colors">
-                        상세보기 및 신청
-                    </a>
+                    <div class="mt-3 flex gap-2">
+                        <a href="${link}" target="_blank" class="flex-1 bg-slate-800 text-white text-xs font-semibold py-2 rounded text-center active:bg-slate-700">
+                            상세보기 및 신청
+                        </a>
+                    </div>
                 `;
-                container.appendChild(card);
+                container.appendChild(item);
             });
         }
     </script>
